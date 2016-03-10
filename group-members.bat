@@ -1,0 +1,1 @@
+ExportVaultData \VaultFile="C:\EVD\Vault.ini" \CredFile="C:\EVD\user.cred" \Target=File \GroupMembersList="C:\EVD\members.log"
