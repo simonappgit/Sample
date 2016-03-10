@@ -1,0 +1,40 @@
+How to execute the script on Nexus:  
+1. Login to switch using your credentials.
+2. If bash is not enabled, Goto 'config t' and enable it by running 'feature bash-shell'
+3. Run ‘run bash’ to go to bash shell.
+4. Run sudo su
+5. Copy the required script to /isan/python/scripts/cisco directory. For example, if you want to manage vlan  configuration using python, create test_vlan.py using vi editor like this: 
+vi test_vlan.py
+6. Now copy the script below to this file. Save and exit.
+7. Execute following command to run the script '/isan/bin/python –m cisco.test_vlan
+8. The format of the command to be executed is, '/isan/bin/python  -m'
+
+##################################################################
+from .vlan import Vlan
+
+#Mention vlan id to be created
+
+vlan_id = 40
+
+v = Vlan()
+
+print "Before adding vlan"
+
+print v.show_vlan().get_vlans()
+
+print "\nCreating Vlan with vlan id %s" %vlan_id
+
+v.create_vlan(vlan_id)
+
+print "\nAfter adding vlan"
+
+print v.show_vlan().get_vlans()
+
+print "\nDeleting vlan with vlan id %s" %vlan_id
+
+v.delete_vlan(vlan_id)
+
+print "\nAfter deleting vlan id %s " %vlan_id
+
+print v.show_vlan().get_vlans()
+

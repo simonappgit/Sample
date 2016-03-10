@@ -1,0 +1,99 @@
+when HTTP_REQUEST {
+    node 192.168.2.1
+}
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+when HTTP_REQUEST {
+
+    ### base directory /jhub/_prod/server_dadafe_nginxproxy_daemon/
+    ### file conf/nginx.conf ----------------------------------------------------------------------------------------------------------------------------- (start)
+
+
+## commented as requested and as useless if relating to routing
+#    ## DADAFE_AKAMAI_EDGE_IP, line 79  --  gets akamai's header (if present) containing the true source IP
+#    if { not [catch {IP::addr [HTTP::header True-Client-IP] mask 255.255.255.255}] } {
+#        set DADAFE_AKAMAI_EDGE_IP [HTTP::header True-Client-IP]  # akamai's header is present; use its content
+#    }
+#    else {
+#        set DADAFE_AKAMAI_EDGE_IP [IP::remote_addr]              # akamai's header is absent; use the remote address
+#    }
+
+
+    ## giochissimo.it termporary settings
+    
+    if { [HTTP::host] contains "www.giochissimo.it" } {
+        set mip_cluster             192.168.1.1   # pool1    
+        set mip_acquisition_cluster 192.168.1.1   # pool1     
+    }
+    else {
+        set mip_cluster             192.168.1.2  # pool2    
+        set mip_acquisition_cluster 192.168.1.2  # pool2     
+    }
+
+    set s_motive_com 192.168.1.3                 # static.domain.com
+
+
+    ## configuration for proxy_qa
+    if { [HTTP::cookie exists "dadaqa_test"] } {
+
+        switch [HTTP::cookie value "dadaqa_test"] {
+
+            "brizzoled01" {
+                set mip_porxy         192.168.1.4            # old QA cookie - maintained for retrocompatibility
+                set acquisition_proxy 192.168.1.4            # old QA cookie - maintained for retrocompatibility
+                set proxy_https       192.168.1.4            #                                                   
+                set w112_proxy        192.168.1.4            # new QA cookie                                     
+            }
+
+            "gotomiptest" {
+                set mip_porxy         192.168.1.5            # unknown old QA cookie taken from w2 configs     
+                set acquisition_proxy 192.168.1.5            # unknown old QA cookie taken from w2 configs    
+                set proxy_https       192.168.1.5            #                                                  
+            }
+
+            "gotoQA" {
+                set mip_porxy         192.168.1.4            # new QA cookie                                     [line 111]
+                set acquisition_proxy 192.168.1.4            # new QA cookie                                     [line 122]
+                set music_proxy       192.168.1.4            # new QA cookie                                     [line 129]
+                set w98_proxy         192.168.1.6           # new QA cookie                                     [line 134]
+                set w99_proxy         192.168.1.7          # new QA cookie                                     [line 139]
+                set w126_proxy        192.168.1.8           # new QA cookie                                     [line 144]
+                set w128_proxy        192.168.1.9           # new QA cookie                                     [line 149]
+            }
+
+            default {
+                set mip_porxy         $mip_cluster              # default                                           [line 104]
+                set acquisition_proxy $mip_acquisition_cluster  # default                                           [line 115]
+                set music_proxy       192.168.1.10             # default                                           [line 126]
+                set w98_proxy         192.168.1.3            # default (pool 98)                                 [line 133]
+                set w99_proxy         192.168.1.11            # default (pool 99)                                 [line 138]
+                set w126_proxy        192.168.1.12            # default (pool 126)                                [line 143]
+                set w128_proxy        192.168.1.13            # default (pool 128)                                [line 148]
+                set proxy_https       192.168.1.2            # default (pool2)                        [line 153]
+                set w112_proxy        192.168.1.2            # default (pool2)                        [line 159]
+            }
+
+        }  # end of switch
+
+    }  # end of cookie check
+
+    
+    set ecosystem_proxy 192.168.1.2  # [line 164]
+    set a114_proxy      192.168.1.14     # [line 169]
+
+    ### file conf/nginx.conf ------------------------------------------------------------------------------------------------------------------------------- (end)
+    
+
+    ### file conf/vhosts.d/default_host.conf ------------------------------------------------------------------------- (included in nginx.conf on line 173, start)
+    
+    HTTP::header insert "lws" "feproxy-default" 1                 #                  [line 13]
+
+    if { [HTTP::uri] starts_with "/nginx_status" } {
+        if { not { [IP::client_addr] equals 1.1.1.1 } and  # florence offices [line 34]
+             not { [IP::client_addr] equals 127.0.0.1 } } {       #                  [line 35]
+            reject                                                #                  [line 36]
+        }
+    }
+
+    ### file conf/vhosts.d/default_host.conf --------------------------------------------------------------------------------------------------------------- (end)
